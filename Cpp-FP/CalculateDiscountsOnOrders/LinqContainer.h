@@ -60,12 +60,12 @@ class LinqContainer {
     [[nodiscard]] inline constexpr value_type&       at(size_type index) { return elements.at(index); }
     [[nodiscard]] inline constexpr const value_type& at(size_type index) const { return elements.at(index); }
 
-    auto Take(size_type size_) && {
+    [[nodiscard]] auto Take(size_type size_) && {
         if (size_ > size()) throw std::out_of_range { "Requested size is greater than the container size" };
         elements.resize(size_);
         return std::move(*this);
     }
-    auto Take(size_type size_) const& {
+    [[nodiscard]] auto Take(size_type size_) const& {
         if (size_ > size()) throw std::out_of_range { "Requested size is greater than the container size" };
         LinqContainer new_elements {};
         new_elements.resize(size());
@@ -74,16 +74,18 @@ class LinqContainer {
         return std::move(new_elements);
     }
 
-    Type Average() const requires addable< Type >&& dividable< Type > { return std::accumulate(elements.begin(), elements.end(), value_type(0)) / elements.size(); }
+    [[nodiscard]] Type Average() const requires addable< Type >&& dividable< Type > {
+        return std::accumulate(elements.begin(), elements.end(), value_type(0)) / elements.size();
+    }
 
     template < std::predicate< Type, Type > Functor >
-    auto OrderBy(Functor&& func) && -> LinqContainer {
+    [[nodiscard]] auto OrderBy(Functor&& func) && -> LinqContainer {
         std::sort(elements.begin(), elements.end(), func);
 
         return std::move(elements);
     }
     template < std::predicate< Type, Type > Functor >
-    auto OrderBy(Functor&& func) const& -> LinqContainer {
+    [[nodiscard]] auto OrderBy(Functor&& func) const& -> LinqContainer {
         std::vector< Type, allocator_type > new_elements = elements;
         std::sort(new_elements.begin(), new_elements.end(), func);
 
@@ -91,24 +93,24 @@ class LinqContainer {
     }
 
     template < std::predicate< Type > Functor >
-    auto Where(Functor&& func) && -> LinqContainer {
+    [[nodiscard]] auto Where(Functor&& func) && -> LinqContainer {
         LinqContainer new_elements {};
         new_elements.resize(size());
-        Where_Internal(begin(), end(), new_elements.begin(), func);
-
+        auto count = Where_Internal(begin(), end(), new_elements.begin(), func);
+        new_elements.resize(count);
         return std::move(new_elements);
     }
     template < std::predicate< Type > Functor >
-    auto Where(Functor&& func) const& -> LinqContainer {
+    [[nodiscard]] auto Where(Functor&& func) const& -> LinqContainer {
         LinqContainer new_elements {};
         new_elements.resize(size());
-        Where_Internal(begin(), end(), new_elements.begin(), func);
-
+        auto count = Where_Internal(begin(), end(), new_elements.begin(), func);
+        new_elements.resize(count);
         return std::move(new_elements);
     }
 
     template < class Functor, class Ret = std::invoke_result_t< Functor, Type >, class Alloc = std::allocator_traits< allocator_type >::template rebind_alloc< Ret > >
-    auto Select(Functor&& func) && -> LinqContainer< Ret, Alloc > {
+    [[nodiscard]] auto Select(Functor&& func) && -> LinqContainer< Ret, Alloc > {
         LinqContainer< Ret, Alloc > new_elements {};
         new_elements.resize(size());
         Select_Internal(begin(), end(), new_elements.begin(), func);
@@ -116,7 +118,7 @@ class LinqContainer {
         return std::move(new_elements);
     }
     template < class Functor, class Ret = std::invoke_result_t< Functor, Type >, class Alloc = std::allocator_traits< allocator_type >::template rebind_alloc< Ret > >
-    auto Select(Functor&& func) const& -> LinqContainer< Ret, Alloc > {
+    [[nodiscard]] auto Select(Functor&& func) const& -> LinqContainer< Ret, Alloc > {
         LinqContainer< Ret, Alloc > new_elements {};
         new_elements.resize(size());
         Select_Internal(begin(), end(), new_elements.begin(), func);
@@ -126,16 +128,19 @@ class LinqContainer {
 
   private:
     template < class Init, class OutIt, class TInit, class Functor >
-    auto Where_Internal(const Init start, const OutIt last, TInit target, Functor&& func) const {
+    [[nodiscard]] auto Where_Internal(const Init start, const OutIt last, TInit target, Functor&& func) const {
         auto       first_element  = start;
         const auto last_element   = last;
         auto       target_element = target;
+        size_type  count          = 0;
         for (; first_element != last_element; first_element++) {
             if (func(*first_element)) {
                 *target_element = *first_element;
                 target_element++;
+                count++;
             }
         }
+        return count;
     }
 
     template < class Init, class OutIt, class TInit, class Functor >
