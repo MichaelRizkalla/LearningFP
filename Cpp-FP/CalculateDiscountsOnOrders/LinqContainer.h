@@ -11,6 +11,7 @@
 #include <stdexcept>
 #include <type_traits>
 #include <vector>
+#include <ranges>
 
 template < typename Type >
 concept addable = requires(Type lhs, Type rhs) {
@@ -23,7 +24,7 @@ concept dividable = requires(Type lhs, Type rhs) {
 };
 
 template < class Type, class Allocator = std::allocator< Type > >
-class LinqContainer {
+class LinqContainer : public std::ranges::view_interface<LinqContainer<Type, Allocator>> {
   public:
     using value_type     = std::vector< Type >::value_type;
     using allocator_type = std::vector< Type >::allocator_type;
@@ -46,7 +47,6 @@ class LinqContainer {
         return *this;
     }
 
-    [[nodiscard]] inline constexpr size_type size() const noexcept { return elements.size(); }
     [[nodiscard]] inline constexpr void      resize(size_type size_) { return elements.resize(size_); }
 
     [[nodiscard]] inline constexpr iterator       begin() noexcept { return elements.begin(); }
@@ -54,21 +54,18 @@ class LinqContainer {
     [[nodiscard]] inline constexpr iterator       end() noexcept { return elements.end(); }
     [[nodiscard]] inline constexpr const_iterator end() const noexcept { return elements.end(); }
 
-    [[nodiscard]] inline constexpr value_type&       operator[](size_type index) { return elements[index]; }
-    [[nodiscard]] inline constexpr const value_type& operator[](size_type index) const { return elements[index]; }
-
     [[nodiscard]] inline constexpr value_type&       at(size_type index) { return elements.at(index); }
     [[nodiscard]] inline constexpr const value_type& at(size_type index) const { return elements.at(index); }
 
     [[nodiscard]] auto Take(size_type size_) && {
-        if (size_ > size()) throw std::out_of_range { "Requested size is greater than the container size" };
+        if (size_ > this->size()) throw std::out_of_range { "Requested size is greater than the container size" };
         elements.resize(size_);
         return std::move(*this);
     }
     [[nodiscard]] auto Take(size_type size_) const& {
-        if (size_ > size()) throw std::out_of_range { "Requested size is greater than the container size" };
+        if (size_ > this->size()) throw std::out_of_range { "Requested size is greater than the container size" };
         LinqContainer new_elements {};
-        new_elements.resize(size());
+        new_elements.resize(this->size());
         while (size_ > 0) { new_elements[size_ - 1] = at(size_ - 1); }
 
         return std::move(new_elements);
@@ -95,7 +92,7 @@ class LinqContainer {
     template < std::predicate< Type > Functor >
     [[nodiscard]] auto Where(Functor&& func) && -> LinqContainer {
         LinqContainer new_elements {};
-        new_elements.resize(size());
+        new_elements.resize(this->size());
         auto count = Where_Internal(begin(), end(), new_elements.begin(), func);
         new_elements.resize(count);
         return std::move(new_elements);
@@ -103,7 +100,7 @@ class LinqContainer {
     template < std::predicate< Type > Functor >
     [[nodiscard]] auto Where(Functor&& func) const& -> LinqContainer {
         LinqContainer new_elements {};
-        new_elements.resize(size());
+        new_elements.resize(this->size());
         auto count = Where_Internal(begin(), end(), new_elements.begin(), func);
         new_elements.resize(count);
         return std::move(new_elements);
@@ -112,7 +109,7 @@ class LinqContainer {
     template < class Functor, class Ret = std::invoke_result_t< Functor, Type >, class Alloc = std::allocator_traits< allocator_type >::template rebind_alloc< Ret > >
     [[nodiscard]] auto Select(Functor&& func) && -> LinqContainer< Ret, Alloc > {
         LinqContainer< Ret, Alloc > new_elements {};
-        new_elements.resize(size());
+        new_elements.resize(this->size());
         Select_Internal(begin(), end(), new_elements.begin(), func);
 
         return std::move(new_elements);
@@ -120,7 +117,7 @@ class LinqContainer {
     template < class Functor, class Ret = std::invoke_result_t< Functor, Type >, class Alloc = std::allocator_traits< allocator_type >::template rebind_alloc< Ret > >
     [[nodiscard]] auto Select(Functor&& func) const& -> LinqContainer< Ret, Alloc > {
         LinqContainer< Ret, Alloc > new_elements {};
-        new_elements.resize(size());
+        new_elements.resize(this->size());
         Select_Internal(begin(), end(), new_elements.begin(), func);
 
         return std::move(new_elements);
