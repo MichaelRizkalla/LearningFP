@@ -9,10 +9,10 @@
 
 int main() {
     // construct our application with fake 4 orders
-    Application app {};
+    fp::Application app {};
 
     // get the discounts
     auto                 discounts = app.getOrdersWithDiscount({ {}, {}, {}, {} });
-    std::vector< Order > some_orders { {}, {}, {}, {} };
+    std::vector< fp::Order > some_orders { {}, {}, {}, {} };
     auto                 more_discounts = app.getOrdersWithDiscount(some_orders);
 }
