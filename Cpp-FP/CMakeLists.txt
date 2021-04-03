@@ -11,3 +11,5 @@ project ("Cpp-FP")
 # Include sub-projects.
 add_subdirectory ("CalculateDiscountsOnOrders")
 add_subdirectory ("CompositionHelperTests")
+
+add_subdirectory("CompositionExample")

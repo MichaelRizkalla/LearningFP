@@ -76,6 +76,11 @@ namespace fp {
             return std::move(new_elements);
         }
 
+        [[nodiscard]] Type FirstOrDefault() const {
+            if (this->empty()) throw std::out_of_range { "Empty container" };
+            return elements.at(0);
+        }
+
         [[nodiscard]] Type Average() const requires addable< Type >&& dividable< Type > {
             return std::accumulate(elements.begin(), elements.end(), value_type(0)) / elements.size();
         }
