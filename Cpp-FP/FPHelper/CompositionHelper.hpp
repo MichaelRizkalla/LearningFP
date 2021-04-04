@@ -138,6 +138,8 @@ namespace fp {
       public:
         using FunctionType = Base::ImplFunctionType;
 
+        [[nodiscard]] constexpr CompositionFunction() requires(!std::is_class_v< FunctionType >) : Base(nullptr) {}
+        [[nodiscard]] constexpr CompositionFunction() requires(std::is_class_v< FunctionType >) : Base(FunctionType {}) {}
         [[nodiscard]] constexpr CompositionFunction(FunctionType&& func) : Base(std::move(func)) {}
         [[nodiscard]] constexpr CompositionFunction(const FunctionType& func) : Base(func) {}
         [[nodiscard]] CompositionFunction(const CompositionFunction&) = default;

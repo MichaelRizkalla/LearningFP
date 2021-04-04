@@ -76,8 +76,8 @@ namespace fp {
             return std::move(new_elements);
         }
 
-        [[nodiscard]] Type FirstOrDefault() const {
-            if (this->empty()) throw std::out_of_range { "Empty container" };
+        [[nodiscard]] Type FirstOrDefault() const noexcept {
+            if (this->empty()) return Type {};
             return elements.at(0);
         }
 
