@@ -1,0 +1,12 @@
+[package]
+name = "CalculateDiscountsOnOrders"
+version = "0.1.0"
+authors = ["Michael Rizkalla <Michael.Anis1995@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+linq = "0.0.1-release"
+float-ord = "0.3.1"
+num = "0.4.0"
