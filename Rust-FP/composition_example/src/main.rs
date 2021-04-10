@@ -1,72 +1,42 @@
 use chrono::prelude::*;
 use linq::iter::Enumerable;
 
-mod compose_impl{
-    #[allow(dead_code)]
-    pub fn compose_single_input<'a, A, B, C, Y, Z>(f1: Y, f2: Z) -> impl Fn(A) -> C
-    where
-        Y: Fn(A) -> B + 'a,
+pub trait Compose<'a, A, B, C, Z> {
+    fn compose(self, outer_function: Z) -> Box<dyn Fn(A) -> C + 'a>
+    where 
+        Self: Fn(A) -> B + 'a,
+        Z: Fn(B) -> C + 'a;
+} 
+
+impl<'a, A, B, C, Z, T> Compose<'a, A, B, C, Z> for T
+where
+    T: Fn(A) -> B,
+{
+    fn compose(self, outer_function: Z) -> Box<dyn Fn(A) -> C + 'a>
+    where 
+        Self: Fn(A) -> B + 'a,
         Z: Fn(B) -> C + 'a,
     {
-        move |a| f2(f1(a))
-    }
-
-    #[allow(dead_code)]
-    pub fn compose_two_inputs<'a, A, B, C, D, Y, Z>(f1: Y, f2: Z) -> impl Fn(A, D) -> C
-    where
-        Y: 'a + Fn(A, D) -> B,
-        Z: 'a + Fn(B) -> C,
-    {
-        move |a, b| f2(f1(a, b))
-    }
-
-    #[allow(dead_code)]
-    pub fn compose_three_inputs<'a, A, B, C, D, E, Y, Z>(f1: Y, f2: Z) -> impl Fn(A, D, E) -> C
-    where
-        Y: 'a + Fn(A, D, E) -> B,
-        Z: 'a + Fn(B) -> C,
-    {
-        move |a, b, c| f2(f1(a, b, c))
+        Box::new(move |a| outer_function(self(a)))
     }
 }
 
-#[allow(unused_macros)]
-macro_rules! compose_single_input {
-    ( $last:expr ) => { $last };
-    ( $head:expr, $($tail:expr), +) => {
-        compose_impl::compose_single_input($head, compose_single_input!($($tail),+))
-    };
-}
-#[allow(unused_macros)]
-macro_rules! compose_two_inputs {
-    ( $last:expr ) => { $last };
-    ( $head:expr, $($tail:expr), +) => {
-        compose_impl::compose_two_inputs($head, compose_two_inputs!($($tail),+))
-    };
-}
-#[allow(unused_macros)]
-macro_rules! compose_three_inputs {
-    ( $last:expr ) => { $last };
-    ( $head:expr, $($tail:expr), +) => {
-        compose_impl::compose_three_inputs($head, compose_three_inputs!($($tail),+))
-    };
-}
-
-#[derive(PartialEq)]
+#[derive(PartialEq, Copy, Clone)]
 enum InvoiceChoice { Inv1 = 0, Inv2 = 1, Inv3 = 2, Inv4 = 3, Inv5 = 4 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Copy, Clone)]
 enum ShippingChoice { Sh1, Sh2, Sh3 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Copy, Clone)]
 enum FreightChoice { Fr1, Fr2, Fr3, Fr4, Fr5, Fr6 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Copy, Clone)]
 enum AvailabilityChoice { AV1, AV2, AV3, AV4 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Copy, Clone)]
 enum ShippingDateChoice  { SD1, SD2, SD3, SD4, SD5 }
 
+#[derive(Copy, Clone)]
 struct ProcessConfiguration {
     invoice_choice: InvoiceChoice,
     shipping_choice: ShippingChoice,
@@ -99,6 +69,7 @@ impl MyDateTime {
     }
 }
 
+#[derive(Copy, Clone)]
 struct Customer {}
 
 impl Customer {
@@ -125,6 +96,7 @@ impl Order {
     }
 }
 
+#[derive(Copy, Clone)]
 struct Invoice {
     cost: f64,
 }
@@ -151,6 +123,7 @@ impl Shipping {
     }
 }
 
+#[derive(Copy, Clone)]
 struct Freight{
     cost: f64,
 }
@@ -187,6 +160,7 @@ impl ShippingDate {
     }
 }
 
+#[derive(Copy, Clone)]
 struct InvoiceFunctions {}
 
 impl InvoiceFunctions {
@@ -222,6 +196,7 @@ impl InvoiceFunctions {
     }
 }
 
+#[derive(Copy, Clone)]
 struct ShippingFunctions {}
 
 impl ShippingFunctions{
@@ -248,6 +223,7 @@ impl ShippingFunctions{
     }
 }
 
+#[derive(Copy, Clone)]
 struct FreightFunctions {}
 
 impl FreightFunctions {
@@ -289,6 +265,7 @@ impl FreightFunctions {
     }
 }
 
+#[derive(Copy, Clone)]
 struct AvailabilityFunctions {}
 
 impl AvailabilityFunctions {
@@ -330,6 +307,7 @@ impl AvailabilityFunctions {
     }
 }
 
+#[derive(Copy, Clone)]
 struct ShippingDateFunctions {}
 
 impl ShippingDateFunctions {
@@ -423,6 +401,7 @@ impl FreightChooser {
     }
 }
 
+#[derive(Copy, Clone)]
 struct InvoicingPath {} 
 
 impl InvoicingPath {
@@ -482,6 +461,7 @@ impl ShippingDateChooser {
     }
 }
 
+#[derive(Copy, Clone)]
 struct AvailabilityPath {}
 
 impl AvailabilityPath {
@@ -507,6 +487,7 @@ impl AvailabilityPath {
     }
 }
 
+#[derive(Copy, Clone)]
 struct Application {}
 
 impl Application {
@@ -516,49 +497,45 @@ impl Application {
 
     fn invoice_path_function<'a>(config: &ProcessConfiguration, inv_path: &InvoicingPath) 
     -> impl Fn(&'a Order)->Freight {
-        compose_single_input! (
             match inv_path.invoice_functions().iter()
                 .where_by(|x| x.invoice_choice == config.invoice_choice)
                 .select(|x| x.calc_invoice)
                 .first() {
                     Some(x) => x,
                     None => panic!("There's no function to calculate the Invoice!"),
-            },
+            }.compose(
             match inv_path.shipping_functions().iter()
                 .where_by(|x| x.shipping_choice == config.shipping_choice)
                 .select(|x| x.calc_shipping)
                 .first(){
                     Some(x) => x,
                     None => panic!("There's no function to calculate the Shipping!"),
-            },
+            }).compose(
             match inv_path.freight_functions().iter()
                 .where_by(|x| x.freight_choice == config.freight_choice)
                 .select(|x| x.calc_freight)
                 .first(){
                     Some(x) => x,
                     None => panic!("There's no function to calculate the Freight!"),
-            }
-        )
+            })
     }
 
     fn availability_path_function<'a>(config: &ProcessConfiguration,  av_path: &AvailabilityPath) 
     -> impl Fn(&'a Order)->ShippingDate {
-        compose_single_input! (
             match av_path.availability_functions().iter()
                 .where_by(|x| x.availability_choice == config.availability_choice)
                 .select(|x| x.calc_availability)
                 .first() {
                     Some(x) => x,
                     None => panic!("There's no function to calculate the Availability!"),
-            },
+            }.compose(
             match av_path.shippingdata_functions().iter()
                 .where_by(|x| x.shippingdate_choice == config.shippingdate_choice)
                 .select(|x| x.calc_shippingdate)
                 .first() {
                     Some(x) => x,
                     None => panic!("There's no function to calculate the ShippingDate!"),
-            }
-        )
+            })
     }
 
     pub fn calc_adjusted_cost<'a>(&self, config: ProcessConfiguration, inv_path: InvoicingPath, av_path: AvailabilityPath)
@@ -604,6 +581,6 @@ fn main() {
     order.cost          = 2000.;
 
     let cost_of_order   = app.calc_adjusted_cost(config, InvoicingPath::new(), AvailabilityPath::new());
-
+    
     println!("Cost of order: {0}", cost_of_order(&order));
 }
