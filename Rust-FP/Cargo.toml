@@ -1,0 +1,6 @@
+[workspace]
+
+members = [
+    "CalculateDiscountsOnOrders",
+    "composition_example",
+]
