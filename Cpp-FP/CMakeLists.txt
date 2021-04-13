@@ -8,8 +8,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project ("Cpp-FP")
 
+set(INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/../bin)
+
 # Include sub-projects.
 add_subdirectory ("CalculateDiscountsOnOrders")
 add_subdirectory ("CompositionHelperTests")
-
 add_subdirectory("CompositionExample")

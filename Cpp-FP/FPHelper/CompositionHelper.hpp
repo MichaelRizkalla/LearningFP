@@ -28,7 +28,7 @@ namespace fp {
         struct CompositionFunctionBase;
         template < class Closure, class RetType, class... Args >
         struct NonCompositionFunction {
-            NonCompositionFunction() { static_assert(false, "The entity is not a callable/functor!"); }
+            NonCompositionFunction() { /*static_assert(false, "The entity is not a callable/functor!");*/ }
         };
 
         struct IsNoExcept {};
@@ -68,7 +68,7 @@ namespace fp {
 
             [[nodiscard]] constexpr auto operator->() const noexcept requires std::is_class_v< std::remove_cvref_t< UnderlyingFunctionType > > { return &function_; }
 
-            template < class SecondCallable, class ComposedRetType = functor_traits< std::decay_t< SecondCallable > >::return_type >
+            template < class SecondCallable, class ComposedRetType = typename functor_traits< std::decay_t< SecondCallable > >::return_type >
             [[nodiscard]] auto Compose(SecondCallable&& secondFunc) const requires composable< std::decay_t< UnderlyingFunctionType >, std::decay_t< SecondCallable > > {
                 if constexpr (functor_traits< SecondCallable >::has_const && functor_traits< UnderlyingFunctionType >::has_const) {
                     auto composedFunction = [function__ = function_, secondFunc](Args... args) noexcept(noexcept(std::declval< SecondCallable >()(
@@ -93,7 +93,7 @@ namespace fp {
         struct CompositionFunctionImpl< Closure, ClosureType > : public BaseChooser< void, ClosureType, void > {
           protected:
             using ImplBase         = BaseChooser< void, ClosureType, void >;
-            using ImplFunctionType = ImplBase::UnderlyingFunctionType;
+            using ImplFunctionType = typename ImplBase::UnderlyingFunctionType;
 
           public:
             [[nodiscard]] constexpr CompositionFunctionImpl(ImplFunctionType&& func) : ImplBase(std::move(func)) {}
@@ -104,7 +104,7 @@ namespace fp {
         struct CompositionFunctionImpl< Closure, RetType(Args...) > : public BaseChooser< void, Closure, RetType, Args... > {
           protected:
             using ImplBase         = BaseChooser< void, Closure, RetType, Args... >;
-            using ImplFunctionType = ImplBase::UnderlyingFunctionType;
+            using ImplFunctionType = typename ImplBase::UnderlyingFunctionType;
 
           public:
             [[nodiscard]] constexpr CompositionFunctionImpl(ImplFunctionType&& func) : ImplBase(std::move(func)) {}
@@ -115,7 +115,7 @@ namespace fp {
         struct CompositionFunctionImpl< Closure, RetType(Args...) noexcept > : public BaseChooser< IsNoExcept, Closure, RetType, Args... > {
           protected:
             using ImplBase         = BaseChooser< IsNoExcept, Closure, RetType, Args... >;
-            using ImplFunctionType = ImplBase::UnderlyingFunctionType;
+            using ImplFunctionType = typename ImplBase::UnderlyingFunctionType;
 
           public:
             [[nodiscard]] constexpr CompositionFunctionImpl(ImplFunctionType&& func) : ImplBase(std::move(func)) {}
@@ -136,7 +136,7 @@ namespace fp {
         using Base = impl::CompositionFunctionImpl< Closure, Signature >;
 
       public:
-        using FunctionType = Base::ImplFunctionType;
+        using FunctionType = typename Base::ImplFunctionType;
 
         [[nodiscard]] constexpr CompositionFunction() requires(!std::is_class_v< FunctionType >) : Base(nullptr) {}
         [[nodiscard]] constexpr CompositionFunction() requires(std::is_class_v< FunctionType >) : Base(FunctionType {}) {}
@@ -181,8 +181,8 @@ namespace fp {
     /// <param name="firstFunc">First callable X</param>
     /// <param name="secondFunc">Second callable Y</param>
     /// <returns>CompositionFunction</returns>
-    template < class FirstCallable, class SecondCallable, class RetType = functor_traits< std::decay_t< SecondCallable > >::return_type,
-               class ArgsList = functor_traits< std::decay_t< FirstCallable > >::argument_types >
+    template < class FirstCallable, class SecondCallable, class RetType = typename functor_traits< std::decay_t< SecondCallable > >::return_type,
+               class ArgsList = typename functor_traits< std::decay_t< FirstCallable > >::argument_types >
     [[nodiscard]] constexpr auto Compose(FirstCallable  firstFunc,
                                          SecondCallable secondFunc) requires composable< std::decay_t< FirstCallable >, std::decay_t< SecondCallable > > {
         return impl::Composer< FirstCallable, SecondCallable, RetType, ArgsList >::Compose(std::move(firstFunc), std::move(secondFunc));

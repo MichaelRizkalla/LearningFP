@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <concepts>
+#include <cstring>
 #include <memory>
 #include <numeric>
 #include <ranges>
@@ -29,13 +30,13 @@ namespace fp {
     };
 
     template < class Type, class Allocator = std::allocator< Type > >
-    class LinqContainer : public std::ranges::view_interface< LinqContainer< Type, Allocator > > {
+    class LinqContainer {
       public:
-        using value_type     = std::vector< Type >::value_type;
-        using allocator_type = std::vector< Type >::allocator_type;
-        using size_type      = std::vector< Type >::size_type;
-        using iterator       = std::vector< Type >::iterator;
-        using const_iterator = std::vector< Type >::const_iterator;
+        using value_type     = typename std::vector< Type >::value_type;
+        using allocator_type = typename std::vector< Type >::allocator_type;
+        using size_type      = typename std::vector< Type >::size_type;
+        using iterator       = typename std::vector< Type >::iterator;
+        using const_iterator = typename std::vector< Type >::const_iterator;
 
         LinqContainer(std::initializer_list< Type > elements_) : elements(elements_) {};
         LinqContainer(std::vector< Type > elements_) : elements(elements_) {};
@@ -52,32 +53,35 @@ namespace fp {
             return *this;
         }
 
-        [[nodiscard]] inline constexpr void resize(size_type size_) { return elements.resize(size_); }
+        inline constexpr void resize(size_type size_) { return elements.resize(size_); }
 
-        [[nodiscard]] inline constexpr iterator       begin() noexcept { return elements.begin(); }
-        [[nodiscard]] inline constexpr const_iterator begin() const noexcept { return elements.begin(); }
-        [[nodiscard]] inline constexpr iterator       end() noexcept { return elements.end(); }
-        [[nodiscard]] inline constexpr const_iterator end() const noexcept { return elements.end(); }
+        [[nodiscard]] inline constexpr auto       begin() noexcept { return elements.begin(); }
+        [[nodiscard]] inline constexpr auto           begin() const noexcept { return elements.begin(); }
+        [[nodiscard]] inline constexpr auto           end() noexcept { return elements.end(); }
+        [[nodiscard]] inline constexpr auto           end() const noexcept { return elements.end(); }
 
-        [[nodiscard]] inline constexpr value_type&       at(size_type index) { return elements.at(index); }
-        [[nodiscard]] inline constexpr const value_type& at(size_type index) const { return elements.at(index); }
+        [[nodiscard]] inline constexpr auto&       at(size_type index) { return elements.at(index); }
+        [[nodiscard]] inline constexpr const auto& at(size_type index) const { return elements.at(index); }
+
+        [[nodiscard]] inline constexpr auto size() const noexcept { return elements.size(); }
+        [[nodiscard]] inline constexpr auto empty() const noexcept { return elements.empty(); }
 
         [[nodiscard]] auto Take(size_type size_) && {
-            if (size_ > this->size()) throw std::out_of_range { "Requested size is greater than the container size" };
+            if (size_ > size()) throw std::out_of_range { "Requested size is greater than the container size" };
             elements.resize(size_);
             return std::move(*this);
         }
         [[nodiscard]] auto Take(size_type size_) const& {
-            if (size_ > this->size()) throw std::out_of_range { "Requested size is greater than the container size" };
+            if (size_ > size()) throw std::out_of_range { "Requested size is greater than the container size" };
             LinqContainer new_elements {};
-            new_elements.resize(this->size());
+            new_elements.resize(size());
             while (size_ > 0) { new_elements[size_ - 1] = at(size_ - 1); }
 
             return std::move(new_elements);
         }
 
         [[nodiscard]] Type FirstOrDefault() const noexcept {
-            if (this->empty()) return Type {};
+            if (empty()) return Type {};
             return elements.at(0);
         }
 
@@ -102,7 +106,7 @@ namespace fp {
         template < std::predicate< Type > Functor >
         [[nodiscard]] auto Where(Functor&& func) && -> LinqContainer {
             LinqContainer new_elements {};
-            new_elements.resize(this->size());
+            new_elements.resize(size());
             auto count = Where_Internal(begin(), end(), new_elements.begin(), func);
             new_elements.resize(count);
             return std::move(new_elements);
@@ -110,24 +114,26 @@ namespace fp {
         template < std::predicate< Type > Functor >
         [[nodiscard]] auto Where(Functor&& func) const& -> LinqContainer {
             LinqContainer new_elements {};
-            new_elements.resize(this->size());
+            new_elements.resize(size());
             auto count = Where_Internal(begin(), end(), new_elements.begin(), func);
             new_elements.resize(count);
             return std::move(new_elements);
         }
 
-        template < class Functor, class Ret = std::invoke_result_t< Functor, Type >, class Alloc = std::allocator_traits< allocator_type >::template rebind_alloc< Ret > >
+        template < class Functor, class Ret = std::invoke_result_t< Functor, Type >,
+                   class Alloc = typename std::allocator_traits< allocator_type >::template rebind_alloc< Ret > >
         [[nodiscard]] auto Select(Functor&& func) && -> LinqContainer< Ret, Alloc > {
             LinqContainer< Ret, Alloc > new_elements {};
-            new_elements.resize(this->size());
+            new_elements.resize(size());
             Select_Internal(begin(), end(), new_elements.begin(), func);
 
             return std::move(new_elements);
         }
-        template < class Functor, class Ret = std::invoke_result_t< Functor, Type >, class Alloc = std::allocator_traits< allocator_type >::template rebind_alloc< Ret > >
+        template < class Functor, class Ret = std::invoke_result_t< Functor, Type >,
+                   class Alloc = typename std::allocator_traits< allocator_type >::template rebind_alloc< Ret > >
         [[nodiscard]] auto Select(Functor&& func) const& -> LinqContainer< Ret, Alloc > {
             LinqContainer< Ret, Alloc > new_elements {};
-            new_elements.resize(this->size());
+            new_elements.resize(size());
             Select_Internal(begin(), end(), new_elements.begin(), func);
 
             return std::move(new_elements);
@@ -167,6 +173,41 @@ namespace fp {
         std::vector< Type, Allocator > elements;
     };
 
-}; // namespace fp
+    template < class Type, class Allocator = std::allocator< Type > >
+    class LinqContainerView : public std::ranges::view_interface< LinqContainerView< Type, Allocator > > {
+        LinqContainerView()  = default;
+        ~LinqContainerView() = default;
+        LinqContainerView(LinqContainer< Type, Allocator >& container) : mBegin(container.begin()), mEnd(container.end()) {}
 
-#endif LINQ_CONTAINER
+        auto begin() const noexcept { return mBegin; }
+        auto end() const noexcept { return mEnd; }
+        auto begin() noexcept { return mBegin; }
+        auto end() noexcept { return mEnd; }
+
+      private:
+        typename LinqContainer< Type, Allocator >::iterator mBegin, mEnd;
+    };
+
+    template < class Type, class Allocator >
+    [[nodiscard]] inline constexpr auto begin(const LinqContainer< Type, Allocator >& container) noexcept {
+        return container.begin();
+    }
+
+    template < class Type, class Allocator >
+    [[nodiscard]] inline constexpr auto begin(LinqContainer< Type, Allocator >& container) noexcept {
+        return container.begin();
+    }
+
+    template < class Type, class Allocator >
+    [[nodiscard]] inline constexpr auto end(const LinqContainer< Type, Allocator >& container) noexcept {
+        return container.end();
+    }
+
+    template < class Type, class Allocator >
+    [[nodiscard]] inline constexpr auto end(LinqContainer< Type, Allocator >& container) noexcept {
+        return container.end();
+    }
+
+} // namespace fp
+
+#endif // LINQ_CONTAINER

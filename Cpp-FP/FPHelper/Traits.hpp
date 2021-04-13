@@ -58,64 +58,64 @@ namespace fp {
 
     template < template < class... > class Func, class Ret, class... Args >
     struct functor_traits< Func< Ret(Args...) > > : public impl::functor_traits_eval< Ret, Args... > {
-        using impl::functor_traits_eval< Ret, Args... >::return_type;
-        using impl::functor_traits_eval< Ret, Args... >::argument_types;
+        using typename impl::functor_traits_eval< Ret, Args... >::return_type;
+        using typename impl::functor_traits_eval< Ret, Args... >::argument_types;
         using impl::functor_traits_eval< Ret, Args... >::value;
         static constexpr auto has_noexcept = false;
         static constexpr auto has_const    = false;
     };
     template < class Ret, class... Args >
     struct functor_traits< Ret (*)(Args...) > : public impl::functor_traits_eval< Ret, Args... > {
-        using impl::functor_traits_eval< Ret, Args... >::return_type;
-        using impl::functor_traits_eval< Ret, Args... >::argument_types;
+        using typename impl::functor_traits_eval< Ret, Args... >::return_type;
+        using typename impl::functor_traits_eval< Ret, Args... >::argument_types;
         using impl::functor_traits_eval< Ret, Args... >::value;
         static constexpr auto has_noexcept = false;
         static constexpr auto has_const    = false;
     };
     template < class Ret, class... Args >
     struct functor_traits< Ret (*)(Args...) noexcept > : public impl::functor_traits_eval< Ret, Args... > {
-        using impl::functor_traits_eval< Ret, Args... >::return_type;
-        using impl::functor_traits_eval< Ret, Args... >::argument_types;
+        using typename impl::functor_traits_eval< Ret, Args... >::return_type;
+        using typename impl::functor_traits_eval< Ret, Args... >::argument_types;
         using impl::functor_traits_eval< Ret, Args... >::value;
         static constexpr auto has_noexcept = true;
         static constexpr auto has_const    = false;
     };
     template < class Closure, class Ret, class... Args >
     struct functor_traits< Ret (Closure::*)(Args...) > : public impl::functor_traits_eval< Ret, Args... > {
-        using impl::functor_traits_eval< Ret, Args... >::return_type;
-        using impl::functor_traits_eval< Ret, Args... >::argument_types;
+        using typename impl::functor_traits_eval< Ret, Args... >::return_type;
+        using typename impl::functor_traits_eval< Ret, Args... >::argument_types;
         using impl::functor_traits_eval< Ret, Args... >::value;
         static constexpr auto has_noexcept = false;
         static constexpr auto has_const    = false;
     };
     template < class Closure, class Ret, class... Args >
     struct functor_traits< Ret (Closure::*)(Args...) const > : public impl::functor_traits_eval< Ret, Args... > {
-        using impl::functor_traits_eval< Ret, Args... >::return_type;
-        using impl::functor_traits_eval< Ret, Args... >::argument_types;
+        using typename impl::functor_traits_eval< Ret, Args... >::return_type;
+        using typename impl::functor_traits_eval< Ret, Args... >::argument_types;
         using impl::functor_traits_eval< Ret, Args... >::value;
         static constexpr auto has_noexcept = false;
         static constexpr auto has_const    = true;
     };
     template < class Closure, class Ret, class... Args >
     struct functor_traits< Ret (Closure::*)(Args...) noexcept > : public impl::functor_traits_eval< Ret, Args... > {
-        using impl::functor_traits_eval< Ret, Args... >::return_type;
-        using impl::functor_traits_eval< Ret, Args... >::argument_types;
+        using typename impl::functor_traits_eval< Ret, Args... >::return_type;
+        using typename impl::functor_traits_eval< Ret, Args... >::argument_types;
         using impl::functor_traits_eval< Ret, Args... >::value;
         static constexpr auto has_noexcept = true;
         static constexpr auto has_const    = false;
     };
     template < class Closure, class Ret, class... Args >
     struct functor_traits< Ret (Closure::*)(Args...) const noexcept > : public impl::functor_traits_eval< Ret, Args... > {
-        using impl::functor_traits_eval< Ret, Args... >::return_type;
-        using impl::functor_traits_eval< Ret, Args... >::argument_types;
+        using typename impl::functor_traits_eval< Ret, Args... >::return_type;
+        using typename impl::functor_traits_eval< Ret, Args... >::argument_types;
         using impl::functor_traits_eval< Ret, Args... >::value;
         static constexpr auto has_noexcept = true;
         static constexpr auto has_const    = true;
     };
     template < class Type >
     requires(!std::is_class_v< Type >) struct functor_traits< Type > : public impl::functor_traits_eval< Type > {
-        using impl::functor_traits_eval< Type >::return_type;
-        using impl::functor_traits_eval< Type >::argument_types;
+        using typename impl::functor_traits_eval< Type >::return_type;
+        using typename impl::functor_traits_eval< Type >::argument_types;
         using impl::functor_traits_eval< Type >::value;
         static constexpr auto has_noexcept = false;
         static constexpr auto has_const    = false;
@@ -127,9 +127,9 @@ namespace fp {
     template < class FirstCallable, class SecondCallable >
     struct is_composable {
       public:
-        using first_return                      = functor_traits< FirstCallable >::return_type;
-        using second_args                       = functor_traits< SecondCallable >::argument_types;
-        using first_of_second_args              = pop_first_from_list< second_args >::type;
+        using first_return                      = typename functor_traits< FirstCallable >::return_type;
+        using second_args                       = typename functor_traits< SecondCallable >::argument_types;
+        using first_of_second_args              = typename pop_first_from_list< second_args >::type;
         static constexpr auto second_args_count = count_list_element< second_args >::value;
 
       public:
