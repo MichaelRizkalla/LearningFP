@@ -16,19 +16,9 @@
 #include <stdexcept>
 #include <type_traits>
 #include <vector>
+#include <Traits.hpp>
 
 namespace fp {
-
-    template < typename Type >
-    concept addable = requires(Type lhs, Type rhs) {
-        lhs + rhs;
-    };
-
-    template < typename Type >
-    concept dividable = requires(Type lhs, Type rhs) {
-        lhs / rhs;
-    };
-
     template < class Type, class Allocator = std::allocator< Type > >
     class LinqContainer {
       public:
@@ -55,10 +45,10 @@ namespace fp {
 
         inline constexpr void resize(size_type size_) { return elements.resize(size_); }
 
-        [[nodiscard]] inline constexpr auto       begin() noexcept { return elements.begin(); }
-        [[nodiscard]] inline constexpr auto           begin() const noexcept { return elements.begin(); }
-        [[nodiscard]] inline constexpr auto           end() noexcept { return elements.end(); }
-        [[nodiscard]] inline constexpr auto           end() const noexcept { return elements.end(); }
+        [[nodiscard]] inline constexpr auto begin() noexcept { return elements.begin(); }
+        [[nodiscard]] inline constexpr auto begin() const noexcept { return elements.begin(); }
+        [[nodiscard]] inline constexpr auto end() noexcept { return elements.end(); }
+        [[nodiscard]] inline constexpr auto end() const noexcept { return elements.end(); }
 
         [[nodiscard]] inline constexpr auto&       at(size_type index) { return elements.at(index); }
         [[nodiscard]] inline constexpr const auto& at(size_type index) const { return elements.at(index); }

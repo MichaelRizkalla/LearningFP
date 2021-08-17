@@ -28,7 +28,8 @@ namespace fp {
         struct CompositionFunctionBase;
         template < class Closure, class RetType, class... Args >
         struct NonCompositionFunction {
-            NonCompositionFunction() { /*static_assert(false, "The entity is not a callable/functor!");*/ }
+            NonCompositionFunction() { /*static_assert(false, "The entity is not a callable/functor!");*/
+            }
         };
 
         struct IsNoExcept {};
@@ -57,6 +58,7 @@ namespace fp {
         struct CompositionFunctionBase< FunctionType, RetType(Args...) > : public ICompositionFunction {
 
             using UnderlyingFunctionType = std::remove_const_t< FunctionType >;
+            using return_type            = RetType;
 
             constexpr CompositionFunctionBase(UnderlyingFunctionType&& func) : function_(std::move(func)) {}
             constexpr CompositionFunctionBase(const UnderlyingFunctionType& func) : function_(func) {}
@@ -94,6 +96,7 @@ namespace fp {
           protected:
             using ImplBase         = BaseChooser< void, ClosureType, void >;
             using ImplFunctionType = typename ImplBase::UnderlyingFunctionType;
+            using typename ImplBase::return_type;
 
           public:
             [[nodiscard]] constexpr CompositionFunctionImpl(ImplFunctionType&& func) : ImplBase(std::move(func)) {}
@@ -105,6 +108,7 @@ namespace fp {
           protected:
             using ImplBase         = BaseChooser< void, Closure, RetType, Args... >;
             using ImplFunctionType = typename ImplBase::UnderlyingFunctionType;
+            using typename ImplBase::return_type;
 
           public:
             [[nodiscard]] constexpr CompositionFunctionImpl(ImplFunctionType&& func) : ImplBase(std::move(func)) {}
@@ -116,6 +120,7 @@ namespace fp {
           protected:
             using ImplBase         = BaseChooser< IsNoExcept, Closure, RetType, Args... >;
             using ImplFunctionType = typename ImplBase::UnderlyingFunctionType;
+            using typename ImplBase::return_type;
 
           public:
             [[nodiscard]] constexpr CompositionFunctionImpl(ImplFunctionType&& func) : ImplBase(std::move(func)) {}
@@ -137,6 +142,7 @@ namespace fp {
 
       public:
         using FunctionType = typename Base::ImplFunctionType;
+        using typename Base::return_type;
 
         [[nodiscard]] constexpr CompositionFunction() requires(!std::is_class_v< FunctionType >) : Base(nullptr) {}
         [[nodiscard]] constexpr CompositionFunction() requires(std::is_class_v< FunctionType >) : Base(FunctionType {}) {}

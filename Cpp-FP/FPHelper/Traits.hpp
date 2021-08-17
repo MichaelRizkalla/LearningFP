@@ -12,6 +12,21 @@
 
 namespace fp {
 
+    template < typename Type >
+    concept addable = requires(Type lhs, Type rhs) {
+        lhs + rhs;
+    };
+
+    template < typename Type >
+    concept dividable = requires(Type lhs, Type rhs) {
+        lhs / rhs;
+    };
+
+    template < typename Type, typename T >
+    concept has_compose = requires(Type type) {
+        type.Compose(T {});
+    };
+
     // Helper structs to track function arguments and return type
     template < class... >
     struct list {};
